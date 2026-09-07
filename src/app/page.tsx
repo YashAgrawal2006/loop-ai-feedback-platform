@@ -1,69 +1,196 @@
-import Image from "next/image";
+"use client";
+
+import { FormEvent, useState } from "react";
 
 export default function Home() {
+  const [customer, setCustomer] = useState("");
+  const [message, setMessage] = useState("");
+  const [source, setSource] = useState("Website");
+  const [sentiment, setSentiment] = useState("");
+  const [theme, setTheme] = useState("");
+  const [priority, setPriority] = useState("");
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const response = await fetch("/api/feedback", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    customer,
+    message,
+    source,
+    sentiment,
+    theme,
+    priority,
+  }),
+});
+
+const data = await response.json();
+
+if (!response.ok) {
+  console.error(data);
+  alert("Failed to submit feedback");
+  return;
+}
+
+console.log("Feedback saved:", data);
+alert("Feedback submitted successfully!");
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Welcome to Loop {" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <main className="min-h-screen bg-zinc-100 px-6 py-12">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+            Project LOOP
+          </p>
+
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-zinc-900">
+            Customer Feedback
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          <p className="mt-3 text-zinc-600">
+            Collect customer feedback and prepare it for analysis.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 rounded-2xl bg-white p-8 shadow-sm"
+        >
+          <div>
+            <label
+              htmlFor="customer"
+              className="mb-2 block text-sm font-medium text-zinc-900"
+            >
+              Customer Name
+            </label>
+
+            <input
+              id="customer"
+              type="text"
+              value={customer}
+              onChange={(event) => setCustomer(event.target.value)}
+              placeholder="Enter customer name"
+              className="w-full rounded-lg border border-zinc-300 px-4 py-3 outline-none transition focus:border-blue-500"
+              required
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div>
+            <label
+              htmlFor="message"
+              className="mb-2 block text-sm font-medium text-zinc-900"
+            >
+              Feedback
+            </label>
+
+            <textarea
+              id="message"
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="Enter customer feedback"
+              rows={5}
+              className="w-full resize-none rounded-lg border border-zinc-300 px-4 py-3 outline-none transition focus:border-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="source"
+              className="mb-2 block text-sm font-medium text-zinc-900"
+            >
+              Source
+            </label>
+
+            <select
+              id="source"
+              value={source}
+              onChange={(event) => setSource(event.target.value)}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
+            >
+              <option value="Website">Website</option>
+              <option value="Email">Email</option>
+              <option value="Survey">Survey</option>
+              <option value="Social Media">Social Media</option>
+              <option value="Support">Support</option>
+            </select>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3">
+            <div>
+              <label
+                htmlFor="sentiment"
+                className="mb-2 block text-sm font-medium text-zinc-900"
+              >
+                Sentiment
+              </label>
+
+              <select
+                id="sentiment"
+                value={sentiment}
+                onChange={(event) => setSentiment(event.target.value)}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
+              >
+                <option value="">Not analyzed</option>
+                <option value="Positive">Positive</option>
+                <option value="Neutral">Neutral</option>
+                <option value="Negative">Negative</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="theme"
+                className="mb-2 block text-sm font-medium text-zinc-900"
+              >
+                Theme
+              </label>
+
+              <input
+                id="theme"
+                type="text"
+                value={theme}
+                onChange={(event) => setTheme(event.target.value)}
+                placeholder="e.g. Pricing"
+                className="w-full rounded-lg border border-zinc-300 px-4 py-3 outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="priority"
+                className="mb-2 block text-sm font-medium text-zinc-900"
+              >
+                Priority
+              </label>
+
+              <select
+                id="priority"
+                value={priority}
+                onChange={(event) => setPriority(event.target.value)}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
+              >
+                <option value="">Not set</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            Submit Feedback
+          </button>
+        </form>
+      </div>
+    </main>
   );
 }
