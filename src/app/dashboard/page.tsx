@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 
 type Feedback = {
   id: string;
-  customer: string;
-  message: string;
-  source: string;
+  customerLabel: string;
+  content: string;
+  channel: string;
   sentiment: string | null;
   theme: string | null;
   priority: string | null;
@@ -46,7 +46,6 @@ export default function Dashboard() {
     fetchFeedback();
   }, []);
 
-  // Overall dashboard statistics
   const totalFeedback = feedback.length;
 
   const positiveFeedback = feedback.filter(
@@ -65,13 +64,12 @@ export default function Dashboard() {
     (item) => item.priority === "High"
   ).length;
 
-  // Filter feedback for the table
   const filteredFeedback = feedback.filter((item) => {
     const searchText = search.toLowerCase();
 
     const matchesSearch =
-      item.customer.toLowerCase().includes(searchText) ||
-      item.message.toLowerCase().includes(searchText);
+      item.customerLabel.toLowerCase().includes(searchText) ||
+      item.content.toLowerCase().includes(searchText);
 
     const matchesSentiment =
       sentimentFilter === "All" ||
@@ -83,7 +81,7 @@ export default function Dashboard() {
 
     const matchesSource =
       sourceFilter === "All" ||
-      item.source === sourceFilter;
+      item.channel === sourceFilter;
 
     return (
       matchesSearch &&
@@ -96,7 +94,6 @@ export default function Dashboard() {
   return (
     <main className="min-h-screen bg-zinc-100 px-6 py-12">
       <div className="mx-auto max-w-6xl">
-        {/* Dashboard Header */}
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
             Project LOOP
@@ -111,13 +108,11 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Metric Cards */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-sm font-medium text-zinc-500">
               Total Feedback
             </p>
-
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {totalFeedback}
             </p>
@@ -127,7 +122,6 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               Positive
             </p>
-
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {positiveFeedback}
             </p>
@@ -137,7 +131,6 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               Neutral
             </p>
-
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {neutralFeedback}
             </p>
@@ -147,7 +140,6 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               Negative
             </p>
-
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {negativeFeedback}
             </p>
@@ -157,14 +149,12 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               High Priority
             </p>
-
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {highPriorityFeedback}
             </p>
           </div>
         </div>
 
-        {/* Recent Feedback */}
         <div className="mt-8 rounded-2xl bg-white p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-xl font-bold text-zinc-900">
@@ -176,9 +166,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Search and Filters */}
           <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {/* Search */}
             <input
               type="text"
               value={search}
@@ -187,7 +175,6 @@ export default function Dashboard() {
               className="rounded-lg border border-zinc-300 px-4 py-3 outline-none focus:border-blue-500"
             />
 
-            {/* Sentiment Filter */}
             <select
               value={sentimentFilter}
               onChange={(event) => setSentimentFilter(event.target.value)}
@@ -199,7 +186,6 @@ export default function Dashboard() {
               <option value="Negative">Negative</option>
             </select>
 
-            {/* Priority Filter */}
             <select
               value={priorityFilter}
               onChange={(event) => setPriorityFilter(event.target.value)}
@@ -211,7 +197,6 @@ export default function Dashboard() {
               <option value="High">High</option>
             </select>
 
-            {/* Source Filter */}
             <select
               value={sourceFilter}
               onChange={(event) => setSourceFilter(event.target.value)}
@@ -226,28 +211,24 @@ export default function Dashboard() {
             </select>
           </div>
 
-          {/* Loading */}
           {loading && (
             <p className="py-6 text-center text-zinc-500">
               Loading feedback...
             </p>
           )}
 
-          {/* Error */}
           {error && (
             <p className="py-6 text-center text-red-600">
               {error}
             </p>
           )}
 
-          {/* No Results */}
           {!loading && !error && filteredFeedback.length === 0 && (
             <p className="py-6 text-center text-zinc-500">
               No feedback matches your filters.
             </p>
           )}
 
-          {/* Feedback Table */}
           {!loading && !error && filteredFeedback.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -282,15 +263,15 @@ export default function Dashboard() {
                       className="border-b border-zinc-100"
                     >
                       <td className="px-4 py-4 text-zinc-900">
-                        {item.customer}
+                        {item.customerLabel}
                       </td>
 
                       <td className="max-w-md px-4 py-4 text-zinc-600">
-                        {item.message}
+                        {item.content}
                       </td>
 
                       <td className="px-4 py-4 text-zinc-600">
-                        {item.source}
+                        {item.channel}
                       </td>
 
                       <td className="px-4 py-4 text-zinc-600">

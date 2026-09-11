@@ -1,8 +1,29 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { hasRole, requireUser } from "../../../lib/authz";
 
 export async function POST(request: Request) {
   try {
+    const user = await requireUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!hasRole(user.role, ["ADMIN", "ANALYST"])) {
+      return NextResponse.json(
+        {
+          error: "Forbidden",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -31,6 +52,7 @@ export async function POST(request: Request) {
         sentiment: sentiment || null,
         theme: theme || null,
         priority: priority || null,
+        workspaceId: user.workspaceId,
       },
     });
 
@@ -49,7 +71,21 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
+    const user = await requireUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        { status: 401 }
+      );
+    }
+
     const feedback = await prisma.feedback.findMany({
+      where: {
+        workspaceId: user.workspaceId,
+      },
       orderBy: {
         createdAt: "desc",
       },
