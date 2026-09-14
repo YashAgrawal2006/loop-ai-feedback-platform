@@ -1,6 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type Feedback = {
   id: string;
@@ -64,6 +80,74 @@ export default function Dashboard() {
     (item) => item.priority === "High"
   ).length;
 
+  /*
+   * Prepare data for the "Feedback Volume Over Time" chart.
+   *
+   * We group feedback by calendar date and count how many
+   * feedback records were created on each date.
+   */
+  const volumeData = useMemo(() => {
+    const grouped = new Map<string, number>();
+
+    feedback.forEach((item) => {
+      const date = new Date(item.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+
+      grouped.set(date, (grouped.get(date) || 0) + 1);
+    });
+
+    return Array.from(grouped.entries()).map(([date, count]) => ({
+      date,
+      count,
+    }));
+  }, [feedback]);
+
+  /*
+   * Prepare data for the sentiment breakdown chart.
+   */
+  const sentimentData = useMemo(
+    () => [
+      {
+        name: "Positive",
+        value: positiveFeedback,
+      },
+      {
+        name: "Neutral",
+        value: neutralFeedback,
+      },
+      {
+        name: "Negative",
+        value: negativeFeedback,
+      },
+    ],
+    [positiveFeedback, neutralFeedback, negativeFeedback]
+  );
+
+  /*
+   * Prepare data for the "Top Themes" chart.
+   *
+   * Theme values are counted from the actual feedback records.
+   */
+  const themeData = useMemo(() => {
+    const grouped = new Map<string, number>();
+
+    feedback.forEach((item) => {
+      const theme = item.theme || "Uncategorized";
+
+      grouped.set(theme, (grouped.get(theme) || 0) + 1);
+    });
+
+    return Array.from(grouped.entries())
+      .map(([theme, count]) => ({
+        theme,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+  }, [feedback]);
+
   const filteredFeedback = feedback.filter((item) => {
     const searchText = search.toLowerCase();
 
@@ -108,11 +192,13 @@ export default function Dashboard() {
           </p>
         </div>
 
+        {/* Summary metrics */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-sm font-medium text-zinc-500">
               Total Feedback
             </p>
+
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {totalFeedback}
             </p>
@@ -122,6 +208,7 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               Positive
             </p>
+
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {positiveFeedback}
             </p>
@@ -131,6 +218,7 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               Neutral
             </p>
+
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {neutralFeedback}
             </p>
@@ -140,6 +228,7 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               Negative
             </p>
+
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {negativeFeedback}
             </p>
@@ -149,12 +238,150 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-zinc-500">
               High Priority
             </p>
+
             <p className="mt-2 text-3xl font-bold text-zinc-900">
               {highPriorityFeedback}
             </p>
           </div>
         </div>
 
+        {/* Analytics charts */}
+        {!loading && !error && feedback.length > 0 && (
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            {/* Feedback Volume */}
+            <div className="rounded-2xl bg-white p-6 shadow-sm">
+              <div className="mb-5">
+                <h2 className="text-xl font-bold text-zinc-900">
+                  Feedback Volume
+                </h2>
+
+                <p className="mt-1 text-sm text-zinc-500">
+                  Feedback received over time.
+                </p>
+              </div>
+
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={volumeData}
+                    margin={{
+                      top: 10,
+                      right: 10,
+                      left: 0,
+                      bottom: 10,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+
+                    <XAxis dataKey="date" />
+
+                    <YAxis allowDecimals={false} />
+
+                    <Tooltip />
+
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      name="Feedback"
+                      stroke="#2563eb"
+                      strokeWidth={3}
+                      dot={{ r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Sentiment Breakdown */}
+            <div className="rounded-2xl bg-white p-6 shadow-sm">
+              <div className="mb-5">
+                <h2 className="text-xl font-bold text-zinc-900">
+                  Sentiment Breakdown
+                </h2>
+
+                <p className="mt-1 text-sm text-zinc-500">
+                  Distribution of customer sentiment.
+                </p>
+              </div>
+
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sentimentData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={100}
+                      label
+                    >
+                      <Cell fill="#16a34a" />
+                      <Cell fill="#64748b" />
+                      <Cell fill="#dc2626" />
+                    </Pie>
+
+                    <Tooltip />
+
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Top Themes */}
+            <div className="rounded-2xl bg-white p-6 shadow-sm lg:col-span-2">
+              <div className="mb-5">
+                <h2 className="text-xl font-bold text-zinc-900">
+                  Top Themes
+                </h2>
+
+                <p className="mt-1 text-sm text-zinc-500">
+                  Most common themes identified in customer feedback.
+                </p>
+              </div>
+
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={themeData}
+                    layout="vertical"
+                    margin={{
+                      top: 10,
+                      right: 20,
+                      left: 20,
+                      bottom: 10,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                    />
+
+                    <YAxis
+                      type="category"
+                      dataKey="theme"
+                      width={120}
+                    />
+
+                    <Tooltip />
+
+                    <Bar
+                      dataKey="count"
+                      name="Feedback"
+                      fill="#2563eb"
+                      radius={[0, 6, 6, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recent Feedback */}
         <div className="mt-8 rounded-2xl bg-white p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-xl font-bold text-zinc-900">
@@ -177,7 +404,9 @@ export default function Dashboard() {
 
             <select
               value={sentimentFilter}
-              onChange={(event) => setSentimentFilter(event.target.value)}
+              onChange={(event) =>
+                setSentimentFilter(event.target.value)
+              }
               className="rounded-lg border border-zinc-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
             >
               <option value="All">All Sentiments</option>
@@ -188,7 +417,9 @@ export default function Dashboard() {
 
             <select
               value={priorityFilter}
-              onChange={(event) => setPriorityFilter(event.target.value)}
+              onChange={(event) =>
+                setPriorityFilter(event.target.value)
+              }
               className="rounded-lg border border-zinc-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
             >
               <option value="All">All Priorities</option>
@@ -199,7 +430,9 @@ export default function Dashboard() {
 
             <select
               value={sourceFilter}
-              onChange={(event) => setSourceFilter(event.target.value)}
+              onChange={(event) =>
+                setSourceFilter(event.target.value)
+              }
               className="rounded-lg border border-zinc-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
             >
               <option value="All">All Sources</option>
@@ -223,70 +456,74 @@ export default function Dashboard() {
             </p>
           )}
 
-          {!loading && !error && filteredFeedback.length === 0 && (
-            <p className="py-6 text-center text-zinc-500">
-              No feedback matches your filters.
-            </p>
-          )}
+          {!loading &&
+            !error &&
+            filteredFeedback.length === 0 && (
+              <p className="py-6 text-center text-zinc-500">
+                No feedback matches your filters.
+              </p>
+            )}
 
-          {!loading && !error && filteredFeedback.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200">
-                    <th className="px-4 py-3 font-semibold text-zinc-700">
-                      Customer
-                    </th>
+          {!loading &&
+            !error &&
+            filteredFeedback.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-200">
+                      <th className="px-4 py-3 font-semibold text-zinc-700">
+                        Customer
+                      </th>
 
-                    <th className="px-4 py-3 font-semibold text-zinc-700">
-                      Feedback
-                    </th>
+                      <th className="px-4 py-3 font-semibold text-zinc-700">
+                        Feedback
+                      </th>
 
-                    <th className="px-4 py-3 font-semibold text-zinc-700">
-                      Source
-                    </th>
+                      <th className="px-4 py-3 font-semibold text-zinc-700">
+                        Source
+                      </th>
 
-                    <th className="px-4 py-3 font-semibold text-zinc-700">
-                      Sentiment
-                    </th>
+                      <th className="px-4 py-3 font-semibold text-zinc-700">
+                        Sentiment
+                      </th>
 
-                    <th className="px-4 py-3 font-semibold text-zinc-700">
-                      Priority
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredFeedback.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b border-zinc-100"
-                    >
-                      <td className="px-4 py-4 text-zinc-900">
-                        {item.customerLabel}
-                      </td>
-
-                      <td className="max-w-md px-4 py-4 text-zinc-600">
-                        {item.content}
-                      </td>
-
-                      <td className="px-4 py-4 text-zinc-600">
-                        {item.channel}
-                      </td>
-
-                      <td className="px-4 py-4 text-zinc-600">
-                        {item.sentiment || "Not analyzed"}
-                      </td>
-
-                      <td className="px-4 py-4 text-zinc-600">
-                        {item.priority || "Not set"}
-                      </td>
+                      <th className="px-4 py-3 font-semibold text-zinc-700">
+                        Priority
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+
+                  <tbody>
+                    {filteredFeedback.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="border-b border-zinc-100"
+                      >
+                        <td className="px-4 py-4 text-zinc-900">
+                          {item.customerLabel}
+                        </td>
+
+                        <td className="max-w-md px-4 py-4 text-zinc-600">
+                          {item.content}
+                        </td>
+
+                        <td className="px-4 py-4 text-zinc-600">
+                          {item.channel}
+                        </td>
+
+                        <td className="px-4 py-4 text-zinc-600">
+                          {item.sentiment || "Not analyzed"}
+                        </td>
+
+                        <td className="px-4 py-4 text-zinc-600">
+                          {item.priority || "Not set"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
         </div>
       </div>
     </main>
