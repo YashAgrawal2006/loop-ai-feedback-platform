@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { prisma } from "../../../lib/prisma";
 import { hasRole, requireUser } from "../../../lib/authz";
+import { classifyFeedback } from "../../../lib/ai/classify-feedback";
+import { linkFeedbackToTheme } from "../../../lib/ai/link-feedback-theme";
 
 const feedbackStatusSchema = z.enum([
   "NEW",
@@ -39,9 +41,6 @@ export async function POST(request: Request) {
       customer,
       message,
       source,
-      sentiment,
-      theme,
-      priority,
     } = body;
 
     if (!customer || !message || !source) {
@@ -54,21 +53,43 @@ export async function POST(request: Request) {
       );
     }
 
+    // Let Gemini analyze the customer feedback.
+    const classification = await classifyFeedback(message);
+
     const feedback = await prisma.feedback.create({
       data: {
         customerLabel: customer,
         content: message,
         channel: source,
-        sentiment: sentiment || null,
-        theme: theme || null,
-        priority: priority || null,
+
+        // AI classification
+        sentiment: classification.sentiment,
+        category: classification.category,
+        theme: classification.theme,
+        urgency: classification.urgency,
+        priority: classification.priority,
+        summary: classification.summary,
+
         workspaceId: user.workspaceId,
       },
     });
 
-    return NextResponse.json(feedback, {
-      status: 201,
+    // Link the AI-generated theme to the feedback.
+    await linkFeedbackToTheme({
+      feedbackId: feedback.id,
+      workspaceId: user.workspaceId,
+      themeName: classification.theme,
     });
+
+    return NextResponse.json(
+      {
+        ...feedback,
+        classification,
+      },
+      {
+        status: 201,
+      }
+    );
   } catch (error) {
     console.error("Error creating feedback:", error);
 
