@@ -20,52 +20,57 @@ enum FeedbackStatus {
 }
 
 model Workspace {
-  id        String     @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  createdAt DateTime   @default(now())
+  createdAt DateTime @default(now())
 
-  users     User[]
-  feedback  Feedback[]
-  themes    Theme[]
-  reports   Report[]
+  users    User[]
+  feedback Feedback[]
+  themes   Theme[]
+  reports  Report[]
 }
 
 model User {
-  id           String    @id @default(cuid())
+  id           String  @id @default(cuid())
   name         String?
-  email        String    @unique
+  email        String  @unique
   passwordHash String
-  role         Role      @default(ANALYST)
+  role         Role    @default(ANALYST)
 
-  workspaceId  String
-  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  reports Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
 }
 
 model Feedback {
-  id              String          @id @default(cuid())
-  content         String          @map("message")
-  channel         String          @map("source")
-  customerLabel   String          @map("customer")
-  sourceRef       String?
-  sentiment       String?
-  sentimentScore  Float?
-  category        String?
-  urgency         String?
-  status          FeedbackStatus  @default(NEW)
-  theme           String?
-  priority        String?
-  summary         String?
-  workspaceId     String?
-  workspace       Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  feedbackThemes  FeedbackTheme[]
-  embedding       Embedding?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             String         @id @default(cuid())
+  content        String         @map("message")
+  channel        String         @map("source")
+  customerLabel  String         @map("customer")
+  sourceRef      String?
+  sentiment      String?
+  sentimentScore Float?
+  category       String?
+  urgency        String?
+  status         FeedbackStatus @default(NEW)
+  theme          String?
+  priority       String?
+  summary        String?
+
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  feedbackThemes FeedbackTheme[]
+  embedding      Embedding?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
   @@index([createdAt])
@@ -74,30 +79,30 @@ model Feedback {
 }
 
 model Theme {
-  id             String          @id @default(cuid())
-  name           String
-  description    String?
-  color          String?
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  color       String?
 
-  workspaceId    String
-  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   feedbackThemes FeedbackTheme[]
 
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
 }
 
 model FeedbackTheme {
-  id         String   @id @default(cuid())
+  id String @id @default(cuid())
 
   feedbackId String
   themeId    String
 
-  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
-  theme      Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  theme    Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
 
   @@unique([feedbackId, themeId])
   @@index([feedbackId])
@@ -105,29 +110,45 @@ model FeedbackTheme {
 }
 
 model Embedding {
-  id         String   @id @default(cuid())
+  id String @id @default(cuid())
 
   feedbackId String   @unique
   feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 
-  // Vector storage will be configured when we implement
-  // Ask LOOP semantic retrieval.
-  vector     String?
+  // Vector storage for Ask LOOP semantic retrieval.
+  vector String?
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Report {
-  id          String    @id @default(cuid())
+  id String @id @default(cuid())
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  title       String
-  content     String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  // The user who generated this Voice-of-Customer report.
+  generatedById String?
+  generatedBy   User?   @relation(fields: [generatedById], references: [id], onDelete: SetNull)
+
+  // Reporting period covered by this Voice-of-Customer report.
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  title String
+
+  // JSON-serialized Voice-of-Customer report content.
+  contentJson   String?
+
+  // Kept temporarily for compatibility with the existing saved report.
+  // We will remove this after the report API/UI is migrated to contentJson.
+  content String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
+  @@index([generatedById])
+  @@index([periodStart, periodEnd])
 }
