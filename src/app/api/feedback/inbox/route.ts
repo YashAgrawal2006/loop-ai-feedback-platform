@@ -97,7 +97,7 @@ export async function GET(request: Request) {
 
       ...(sentiment
         ? {
-            sentiment,
+            sentiment: sentiment.toLowerCase(),
           }
         : {}),
 

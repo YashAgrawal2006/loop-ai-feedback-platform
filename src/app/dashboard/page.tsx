@@ -65,20 +65,20 @@ export default function Dashboard() {
   const totalFeedback = feedback.length;
 
   const positiveFeedback = feedback.filter(
-    (item) => item.sentiment === "Positive"
-  ).length;
+  (item) => item.sentiment === "positive"
+).length;
 
-  const neutralFeedback = feedback.filter(
-    (item) => item.sentiment === "Neutral"
-  ).length;
+const neutralFeedback = feedback.filter(
+  (item) => item.sentiment === "neutral"
+).length;
 
-  const negativeFeedback = feedback.filter(
-    (item) => item.sentiment === "Negative"
-  ).length;
+const negativeFeedback = feedback.filter(
+  (item) => item.sentiment === "negative"
+).length;
 
-  const highPriorityFeedback = feedback.filter(
-    (item) => item.priority === "High"
-  ).length;
+const highPriorityFeedback = feedback.filter(
+  (item) => item.priority === "high"
+).length;
 
   /*
    * Prepare data for the "Feedback Volume Over Time" chart.
@@ -156,12 +156,12 @@ export default function Dashboard() {
       item.content.toLowerCase().includes(searchText);
 
     const matchesSentiment =
-      sentimentFilter === "All" ||
-      item.sentiment === sentimentFilter;
+  sentimentFilter === "All" ||
+  item.sentiment === sentimentFilter.toLowerCase();
 
-    const matchesPriority =
-      priorityFilter === "All" ||
-      item.priority === priorityFilter;
+const matchesPriority =
+  priorityFilter === "All" ||
+  item.priority === priorityFilter.toLowerCase();
 
     const matchesSource =
       sourceFilter === "All" ||
