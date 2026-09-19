@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LOOP — Customer Feedback Intelligence Platform
 
-## Getting Started
+LOOP is a web-based **Customer Feedback Intelligence Platform** that helps teams collect customer feedback, organize it, understand sentiment and themes, identify priorities, and turn raw feedback into actionable insights.
 
-First, run the development server:
+The platform combines workspace-based application architecture, role-based access control, feedback management, analytics, AI-assisted classification, semantic similarity search, an AI question-and-answer experience (**Ask LOOP**), and Voice-of-Customer reporting.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Live Project
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Live Application:**  
+https://loop-ai-feedback-platform-zeta.vercel.app
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Source Code:**  
+https://github.com/YashAgrawal2006/loop-ai-feedback-platform.git
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## ✨ Key Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🔐 Authentication & Workspace Management
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- User signup and login.
+- Workspace-based application architecture.
+- Protected authenticated application routes.
+- Server-side authorization checks.
+- Workspace-scoped data access.
 
-## Deploy on Vercel
+### 👥 Role-Based Access Control
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+LOOP supports three application roles:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Role | Purpose |
+|---|---|
+| **ADMIN** | Administrative access and member management. |
+| **ANALYST** | Feedback analysis and permitted operational/reporting actions. |
+| **VIEWER** | Read-oriented access to workspace insights. |
+
+Authorization is enforced through server-side API logic.
+
+### 💬 Customer Feedback Management
+
+- Customer feedback submission.
+- Customer, source/channel and message management.
+- Sentiment, category, urgency, theme and priority classification.
+- Feedback status management.
+- Search and filtering.
+- Feedback inbox.
+- CSV ingestion support.
+
+### 📊 Dashboard & Analytics
+
+The dashboard provides:
+
+- Total feedback metrics.
+- Feedback volume.
+- Sentiment breakdown.
+- Priority analysis.
+- Theme-oriented insights.
+- Feedback trends and operational information.
+
+### 🤖 AI-Powered Feedback Intelligence
+
+LOOP uses **Google Gemini** for AI-assisted capabilities including:
+
+- Automated feedback classification.
+- Sentiment analysis.
+- Category and theme classification.
+- Urgency and priority analysis.
+- Feedback summarization.
+- AI-assisted theme linking.
+- Embedding generation.
+
+### 🔎 Semantic Similarity Search
+
+Feedback embeddings allow LOOP to find conceptually related customer feedback rather than relying only on exact keyword matches.
+
+### 🧠 Ask LOOP
+
+**Ask LOOP** provides an AI-powered question-and-answer interface over customer feedback.
+
+Users can ask questions such as:
+
+> "Why are customers having problems with checkout and payments?"
+
+The system retrieves relevant feedback and uses the retrieved information as grounding context for AI-generated responses.
+
+### 📈 Voice-of-Customer Reports
+
+LOOP can generate Voice-of-Customer reports for selected reporting periods.
+
+Reports include:
+
+- Feedback statistics.
+- Sentiment distribution.
+- Priority information.
+- Theme insights.
+- Customer feedback evidence.
+- AI-generated narrative.
+- PDF export.
+
+### 👨‍💼 Administration
+
+Administrators can manage workspace members and roles through the administration functionality.
+
+---
+
+## 🏗️ System Architecture
+
+```text
+                    LOOP Web Application
+                            │
+                Next.js + React + TypeScript
+                            │
+             ┌──────────────┴──────────────┐
+             │                             │
+             ▼                             ▼
+        Application UI                 API Routes
+        Dashboard                     Authentication
+        Feedback                      Feedback
+        Ask LOOP                      AI / Embeddings
+        Reports                       Themes
+        Admin                         Reports
+             │                             │
+             └──────────────┬──────────────┘
+                            ▼
+                    Authorization Layer
+                    NextAuth + RBAC
+                            │
+                            ▼
+                       Prisma ORM
+                            │
+                            ▼
+                     PostgreSQL DB
+                            │
+             ┌──────────────┼──────────────┐
+             ▼              ▼              ▼
+         Feedback        Users         Workspaces
+         Themes        Embeddings        Reports
+                            │
+                            ▼
+                      Google Gemini
+                 Classification / AI / Q&A
