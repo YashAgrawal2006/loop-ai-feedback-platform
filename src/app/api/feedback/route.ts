@@ -19,22 +19,6 @@ const updateFeedbackSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    if (!hasRole(user.role, ["ADMIN", "ANALYST"])) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
 
     const {
@@ -50,6 +34,21 @@ export async function POST(request: Request) {
             "customer, message, and source are required",
         },
         { status: 400 }
+      );
+    }
+
+    // Public customer feedback submission.
+    // Use the default workspace for unauthenticated submissions.
+    const workspace = await prisma.workspace.findFirst({
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: "No workspace available" },
+        { status: 500 }
       );
     }
 
@@ -70,14 +69,14 @@ export async function POST(request: Request) {
         priority: classification.priority,
         summary: classification.summary,
 
-        workspaceId: user.workspaceId,
+        workspaceId: workspace.id,
       },
     });
 
     // Link the AI-generated theme to the feedback.
     await linkFeedbackToTheme({
       feedbackId: feedback.id,
-      workspaceId: user.workspaceId,
+      workspaceId: workspace.id,
       themeName: classification.theme,
     });
 
@@ -95,110 +94,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { error: "Failed to create feedback" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET() {
-  try {
-    const user = await requireUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const feedback = await prisma.feedback.findMany({
-      where: {
-        workspaceId: user.workspaceId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json(feedback);
-  } catch (error) {
-    console.error("Error fetching feedback:", error);
-
-    return NextResponse.json(
-      { error: "Failed to fetch feedback" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(request: Request) {
-  try {
-    const user = await requireUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    if (!hasRole(user.role, ["ADMIN", "ANALYST"])) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
-    }
-
-    const body = await request.json();
-
-    const parsed = updateFeedbackSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid feedback update.",
-          details: parsed.error.flatten(),
-        },
-        { status: 400 }
-      );
-    }
-
-    const { id, status } = parsed.data;
-
-    const existingFeedback =
-      await prisma.feedback.findFirst({
-        where: {
-          id,
-          workspaceId: user.workspaceId,
-        },
-      });
-
-    if (!existingFeedback) {
-      return NextResponse.json(
-        { error: "Feedback not found." },
-        { status: 404 }
-      );
-    }
-
-    const updatedFeedback =
-      await prisma.feedback.update({
-        where: {
-          id,
-        },
-        data: {
-          status,
-        },
-      });
-
-    return NextResponse.json(updatedFeedback);
-  } catch (error) {
-    console.error(
-      "Error updating feedback status:",
-      error
-    );
-
-    return NextResponse.json(
-      { error: "Failed to update feedback status." },
       { status: 500 }
     );
   }
