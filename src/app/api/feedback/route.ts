@@ -17,6 +17,54 @@ const updateFeedbackSchema = z.object({
   status: feedbackStatusSchema,
 });
 
+/**
+ * GET /api/feedback
+ *
+ * Returns feedback belonging to the currently
+ * authenticated user's workspace.
+ *
+ * Used by the dashboard.
+ */
+export async function GET() {
+  try {
+    const user = await requireUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        { status: 401 }
+      );
+    }
+
+    const feedback = await prisma.feedback.findMany({
+      where: {
+        workspaceId: user.workspaceId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(feedback);
+  } catch (error) {
+    console.error("Error fetching feedback:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to fetch feedback",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/feedback
+ *
+ * Public customer feedback submission.
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
