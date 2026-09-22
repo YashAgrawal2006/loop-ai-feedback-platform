@@ -8,6 +8,11 @@ if (!apiKey) {
 
 export const gemini = new GoogleGenAI({
   apiKey,
+  httpOptions: {
+    retryOptions: {
+      attempts: 1,
+    },
+  },
 });
 
 export const GEMINI_MODEL = "gemini-3.5-flash";

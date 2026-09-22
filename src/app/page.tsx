@@ -10,34 +10,67 @@ export default function Home() {
   const [theme, setTheme] = useState("");
   const [priority, setPriority] = useState("");
 
+  // Prevent multiple submissions at the same time.
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const response = await fetch("/api/feedback", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    customer,
-    message,
-    source,
-    sentiment,
-    theme,
-    priority,
-  }),
-});
+    // Prevent duplicate/concurrent requests.
+    if (isSubmitting) return;
 
-const data = await response.json();
+    try {
+      setIsSubmitting(true);
 
-if (!response.ok) {
-  console.error(data);
-  alert("Failed to submit feedback");
-  return;
-}
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customer,
+          message,
+          source,
+          sentiment,
+          theme,
+          priority,
+        }),
+      });
 
-console.log("Feedback saved:", data);
-alert("Feedback submitted successfully!");
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Feedback submission failed:", data);
+
+        alert(
+          data.error ||
+            "Failed to submit feedback. Please try again."
+        );
+
+        return;
+      }
+
+      console.log("Feedback saved:", data);
+
+      alert("Feedback submitted successfully!");
+
+      // Clear the form after successful submission.
+      setCustomer("");
+      setMessage("");
+      setSource("Website");
+      setSentiment("");
+      setTheme("");
+      setPriority("");
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+
+      alert(
+        "Something went wrong while submitting feedback. Please try again."
+      );
+    } finally {
+      // Re-enable the button after the request finishes.
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -157,7 +190,7 @@ alert("Feedback submitted successfully!");
                 value={theme}
                 onChange={(event) => setTheme(event.target.value)}
                 placeholder="e.g. Pricing"
-                className="w-full rounded-lg border border-zinc-300 px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full rounded-lg border border-zinc-300 px-4 py-3 outline-none transition focus:border-blue-500"
               />
             </div>
 
@@ -185,9 +218,10 @@ alert("Feedback submitted successfully!");
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+            disabled={isSubmitting}
+            className="w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Submit Feedback
+            {isSubmitting ? "Submitting..." : "Submit Feedback"}
           </button>
         </form>
       </div>

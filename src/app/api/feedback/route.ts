@@ -92,6 +92,22 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error creating feedback:", error);
 
+    // Gemini quota/rate-limit error.
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      error.status === 429
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "AI service quota exceeded. Please wait a moment and try again.",
+        },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to create feedback" },
       { status: 500 }
