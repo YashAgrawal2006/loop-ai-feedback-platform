@@ -10,12 +10,12 @@ export const gemini = new GoogleGenAI({
   apiKey,
   httpOptions: {
     retryOptions: {
-      attempts: 1,
+      attempts: 4,
     },
   },
 });
 
-export const GEMINI_MODEL = "gemini-3.5-flash";
+export const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 export async function generateGeminiText(prompt: string) {
   const response = await gemini.models.generateContent({
